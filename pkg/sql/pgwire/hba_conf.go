@@ -204,7 +204,7 @@ func ParseAndNormalize(val string) (*hba.Conf, error) {
 		return conf, err
 	}
 
-	if len(conf.Entries) == 0 || !conf.Entries[0].Equivalent(rootEntry) {
+	if len(conf.Entries) == 0 || (!conf.Entries[0].Equivalent(rootEntry) && !conf.Entries[0].Equivalent(rootLocalEntry)) {
 		entries := make([]hba.Entry, 1, len(conf.Entries)+1)
 		entries[0] = rootEntry
 		entries = append(entries, conf.Entries...)
@@ -247,6 +247,14 @@ var rootEntry = hba.Entry{
 	Address:  hba.AnyAddr{},
 	Method:   hba.String{Value: "cert-password"},
 	Input:    "host  all root all cert-password # CockroachDB mandatory rule",
+}
+
+var rootLocalEntry = hba.Entry{
+	ConnType: hba.ConnLocal,
+	User:     []hba.String{{Value: security.RootUser, Quoted: false}},
+	Address:  hba.AnyAddr{},
+	Method:   hba.String{Value: "cert-password"},
+	Input:    "host all root samehost cert-password",
 }
 
 // DefaultHBAConfig is used when the stored HBA configuration string
